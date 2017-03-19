@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />        
+		 <link href="css/bootstrap.min.css" rel="stylesheet">
+		<link href="css/starter-template.css" rel="stylesheet">
+		<link type="text/css" rel="stylesheet" href="http://www.erichynds.com/examples/style.css" />
+		<link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/redmond/jquery-ui.css" />
+		<link type="text/css" rel="stylesheet" href="css/ui.notify.css" />
+        <title>SPOT ON</title>
+		<link rel="shortcut icon" href="img/marker.ico" >	
+    </head>
+    <body>
+       <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Spot On</a>
+		  <a class="navbar-brand" href="#"><img src="img/marker.png" width="20px" height="25px" /></a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="homepage.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="starter-template">	  
+        <h1>Spot On</h1>
+        <p class="lead">Please flip the switch in order to activate Spot On.</p>
+		<div class="onoffswitch">
+    <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="myonoffswitch" onchange="gisStart()">
+    <label class="onoffswitch-label" for="myonoffswitch">
+        <span class="onoffswitch-inner"></span>
+        <span class="onoffswitch-switch"></span>
+    </label>
+								
+	</div>
+	<form action="javascript:shareSubmit();" style="color: white;">
+							     Share email adresses (Use comma as a separator)
+								<input type="text" required="required" style="color:black;">
+								<input type="submit" value="Go" style="color:black;">
+								</form>
+								<div id="share" style="color:white;"></div>
+	<img src="img/marker.png" alt="center"/>
+</div>
+	<div id="mine" style="display:none;" class="row">
+	  <div id="withIcon">
+			<a class="ui-notify-close ui-notify-cross" href="#">x</a>
+			<div style="float:left;margin:0 10px 0 0"><img src="#{icon}" alt="warning" /></div>
+			<h1>#{title}</h1>
+			<p>#{text}</p>
+		</div>
+		</div>
+    </div>
+    
+    <script src="js/ie10-viewport-bug-workaround.js"></script>
+        
+        <script type="text/javascript" src="js/index.js"></script>
+		
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js" type="text/javascript"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1/jquery-ui.js" type="text/javascript"></script>
+	<script src="js/bootstrap.min.js"></script>  
+	<script src="js/jquery.notify.js" type="text/javascript"></script>		
+	<script src="http://js.arcgis.com/3.12/"></script>
+	<script type="text/javascript">
+	var interval, shareinterval;
+	var featureLayera;
+	var flagshare=true;
+	var flag=true;
+	document.addEventListener("deviceready", onDeviceReady, false);
+	function onDeviceReady() {
+ 	//check for compatibility
+    if (!navigator.geolocation) { 
+        //alert("Your Browser is not supported");
+    }
+	}
+	function shareSubmit(){
+	document.getElementById('share').innerHTML = "You have shared your location with following emailID :" + document.forms[0].elements[0].value;
+	require(["esri/geometry/Point", 
+			"esri/SpatialReference", 
+			"esri/geometry/webMercatorUtils",
+			"esri/tasks/query",
+			"esri/tasks/QueryTask",
+			"esri/tasks/BufferParameters",
+			"esri/tasks/GeometryService",
+			"esri/graphic",
+			"esri/layers/FeatureLayer"], 
+	function(Point, SpatialReference, webMercatorUtils, Query, QueryTask, BufferParameters, GeometryService, Graphic, FeatureLayer) { 
+	var featureLayera = new FeatureLayer("http://services.arcgis.com/lHa8gkZXJkNeE9xH/arcgis/rest/services/location/FeatureServer/0", {
+                mode: FeatureLayer.MODE_ONDEMAND,
+                outFields: ["*"]
+            });	
+							var query = new Query();
+                            var queryTask = new QueryTask("http://services.arcgis.com/lHa8gkZXJkNeE9xH/arcgis/rest/services/location/FeatureServer/0");
+                            query.returnGeometry = true;
+                            query.outFields = ["OBJECTID"];
+                            query.where = "Name = '"+ localStorage.getItem("spotonemail").toString()+"'";
+                            queryTask.executeForIds(query, function (results) {
+							//pseudopoint in order to save data particular user
+							var point = new Point( 72.25, 32.25, new SpatialReference({ wkid: 4326 }));	
+							////alert(results[0]);
+							if(results.length > 0){
+							var graphic= new Graphic(point, null,  { OBJECTID: results[0], Name: localStorage.getItem("spotonemail").toString(), desc_: "false" , share: document.forms[0].elements[0].value.toString(), value: "value_update", Id:76}, null);
+							featureLayera.applyEdits(null, [graphic], null, function () {
+							////alert('Data Updated');
+							});
+							}
+							else{
+							var graphic= new Graphic(point, null,  { Name: localStorage.getItem("spotonemail").toString(), desc_: "false", share: document.forms[0].elements[0].value, value: "value_update", Id:76},  null);
+							featureLayera.applyEdits([graphic], null, null, function () {
+							////alert('Data Saved')
+							});
+							}
+							
+							});
+	});//end of require share
+	}
+	
+	//Code for initial feature set up for a user
+	$(function(){	
+	//alert(localStorage.getItem("spotonemail"));
+	
+	$container = $("#mine").notify({ speed: 500,  expires: false});
+	require(["esri/geometry/Point", 
+			 "esri/SpatialReference", 
+			 "esri/geometry/webMercatorUtils",
+			 "esri/tasks/query",
+			 "esri/tasks/QueryTask",
+			 "esri/tasks/BufferParameters",
+			 "esri/tasks/GeometryService",
+			 "esri/graphic",
+			 "esri/layers/FeatureLayer"], 
+	function(Point, SpatialReference, webMercatorUtils, Query, QueryTask, BufferParameters, GeometryService, Graphic, FeatureLayer) { 
+	     featureLayera = new FeatureLayer("http://services.arcgis.com/lHa8gkZXJkNeE9xH/arcgis/rest/services/location/FeatureServer/0", {
+                mode: FeatureLayer.MODE_ONDEMAND,
+                outFields: ["*"]
+            });
+	
+							var query = new Query();
+                            var queryTask = new QueryTask("http://services.arcgis.com/lHa8gkZXJkNeE9xH/arcgis/rest/services/location/FeatureServer/0");
+                            query.returnGeometry = true;
+                            query.outFields = ["OBJECTID"];
+                            query.where = "Name = '"+ localStorage.getItem("spotonemail").toString()+"'";
+                            queryTask.executeForIds(query, function (results) {
+							var point = new Point( 72.25, 32.25, new SpatialReference({ wkid: 4326 }));	
+	
+							if(results.length > 0){
+							var graphic= new Graphic(point, null,  { objectid: results[0], Name: localStorage.getItem("spotonemail").toString(), desc_: "false" , share:"value_update", value: "value_update", Id:76}, null);
+							featureLayera.applyEdits(null, [graphic], null, function () {
+							//alert('Data Updated');
+							});
+							}
+							else{
+							var graphic= new Graphic(point, null,  { Name: localStorage.getItem("spotonemail").toString(), desc_: "false", share:"value_update", value: "value_update", Id:76}, null);
+							featureLayera.applyEdits([graphic], null, null, function () {
+							//alert('Data Saved')
+							});
+							}
+							
+							});
+	});//end of require first
+	}); //end of initial initialization
+
+	function gisStart(){
+	if(document.getElementById("myonoffswitch").checked){ 
+	interval = setInterval(function () {myTimer()}, 5000);
+	shareinterval = setInterval(function () {shareTimer()}, 20000);}
+	else {clearInterval(interval);
+	clearInterval(shareinterval);
+	flag=true;
+	flagshare=true;
+	}		
+	}
+	
+	function shareTimer() {
+	require(["esri/geometry/Point", "esri/SpatialReference", "esri/geometry/webMercatorUtils", "esri/tasks/query", "esri/tasks/QueryTask", "esri/tasks/BufferParameters", "esri/tasks/GeometryService", "esri/graphic", "esri/layers/FeatureLayer" ], function(Point, SpatialReference, webMercatorUtils, Query, QueryTask, BufferParameters, GeometryService, Graphic, FeatureLayer) { 	
+	var queryTaskst = new QueryTask("http://services.arcgis.com/lHa8gkZXJkNeE9xH/arcgis/rest/services/location/FeatureServer/0");
+	var queryst = new Query();
+	queryst.where="desc_ ='true'";		
+	queryst.returnGeometry = false;
+	queryst.outFields = ["Name", "share", "value"];
+	queryTaskst.execute(queryst, function (featureSet){	
+	if(featureSet.features.length >0){
+	var resultFeatures = featureSet.features;
+	for (var i=0, il=resultFeatures.length; i<il; i++) {
+	if(flagshare){
+	if(featureSet.features[i].attributes.Name !== localStorage.getItem("spotonemail")){
+	 var strshare = featureSet.features[i].attributes.share.toString(); 
+	 var device_owner=localStorage.getItem("spotonemail").toString();
+	if((strshare.toUpperCase()).search(device_owner.toUpperCase()) !==-1){
+	/*window.plugin.notification.local.add({
+    message:    featureSet.features[i].attributes.Name +" has reached "+featureSet.features[i].attributes.value,  
+    title:      featureSet.features[i].attributes.Name,  
+    led: 'D9D6D9'	
+	});*/
+	//This can be user defined scenarios
+	$container.notify("create", "withIcon", { title: featureSet.features[i].attributes.Name, text: featureSet.features[i].attributes.Name +" has reached "+featureSet.features[i].attributes.value, icon: "user.png" },{ expires:false });	
+	
+	}
+	}
+	}
+	}
+	flagshare=false;
+	}
+	else{
+	flagshare=true;
+	}
+	});
+	});
+	}//sharetime end
+	
+	function myTimer() {
+	//$container.notify("create", "withIcon", { title: "Office skjdfskjdnfnv", text: "djfhgdjfdj jdhfjdbf kjdbnf", icon: "user.png" },{ expires:false }); 
+	navigator.geolocation.getCurrentPosition(showPosition, showError); 		
+	}	
+	
+	function showPosition(position) {	
+	//geofence crossing notification code
+	require(["esri/geometry/Point", "esri/SpatialReference", "esri/geometry/webMercatorUtils", "esri/tasks/query", "esri/tasks/QueryTask", "esri/tasks/BufferParameters", "esri/tasks/GeometryService", "esri/graphic", "esri/layers/FeatureLayer" ], function(Point, SpatialReference, webMercatorUtils, Query, QueryTask, BufferParameters, GeometryService, Graphic, FeatureLayer) { 	
+	var point = new esri.geometry.Point( Number((position.coords.longitude).toFixed(7)), Number((position.coords.latitude).toFixed(7)), new SpatialReference({ wkid: 4326 }));		
+	gsvc = new GeometryService("http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer");
+	var params = new BufferParameters();
+    params.geometries = [ point ];
+    params.distances = [ 10 ];
+    params.unit = GeometryService.UNIT_METER;
+    params.outSpatialReference = new SpatialReference({ wkid: 4326 });
+    gsvc.buffer(params, showBuffer);
+	function showBuffer(geometries) {
+	
+	var queryTask = new QueryTask("http://services.arcgis.com/lHa8gkZXJkNeE9xH/ArcGIS/rest/services/Geofence/FeatureServer/0");
+	var query = new Query();
+	query.geometry=geometries[0];		
+	query.returnGeometry = false;
+	query.outFields = ["Name", "Desc_"];
+	queryTask.execute(query, function (featureSet){
+	
+	if(featureSet.features.length >0){
+	var resultFeatures = featureSet.features;
+	for (var i=0, il=resultFeatures.length; i<il; i++) {
+	if(flag){
+	/*window.plugin.notification.local.add({
+    message:    featureSet.features[i].attributes.Desc_,  
+    title:      featureSet.features[i].attributes.Name,  
+    led: 'D9D6D9'	
+	});*/
+	//This can be user defined scenarios
+	if( featureSet.features[i].attributes.Name == "Adminsitration Department"){ 	
+	$container.notify("create", "withIcon", { title: featureSet.features[i].attributes.Name, text: featureSet.features[i].attributes.Desc_, icon: "ticket.png" },{ expires:false });
+	}
+	else if(featureSet.features[i].attributes.Name == "Mr. ABC's office"){
+	$container.notify("create", "withIcon", { title: featureSet.features[i].attributes.Name, text: featureSet.features[i].attributes.Desc_, icon: "office.png" },{ expires:false });
+	}
+	else if(featureSet.features[i].attributes.Name == "NIIT Technologies Ltd."){
+	$container.notify("create", "withIcon", { title: featureSet.features[i].attributes.Name, text: featureSet.features[i].attributes.Desc_, icon: "NIIT.png" },{ expires:false });
+	}
+	else if(featureSet.features[i].attributes.Name == "Cafeteria"){
+	$container.notify("create", "withIcon", { title: featureSet.features[i].attributes.Name, text: featureSet.features[i].attributes.Desc_, icon: "lunch.png" },{ expires:false });
+	}
+	else{
+	$container.notify("create", "withIcon", { title: featureSet.features[i].attributes.Name, text: featureSet.features[i].attributes.Desc_, icon: "info.png" },{ expires:false });
+	}
+							var query1 = new Query();
+                            var queryTask1 = new QueryTask("http://services.arcgis.com/lHa8gkZXJkNeE9xH/arcgis/rest/services/location/FeatureServer/0");
+                            query1.returnGeometry = true;
+                            query1.outFields = ["OBJECTID"];
+                            query1.where = "Name = '"+ localStorage.getItem("spotonemail").toString()+"'";
+                            queryTask1.executeForIds(query1, function (results) {
+							var point = new Point( 72.25, 32.25, new SpatialReference({ wkid: 4326 }));	
+							//alert(results[0]);
+							if(results.length > 0){
+							var graphic= new Graphic(point, null,  { OBJECTID: results[0], Name: localStorage.getItem("spotonemail").toString(), desc_: "true" , share: document.forms[0].elements[0].value.toString(), value: featureSet.features[0].attributes.Name, Id:76}, null);
+							featureLayera.applyEdits(null, [graphic], null, function () {
+							//alert('Data Updated');
+							});
+							}
+							});	
+	
+	}
+	}
+	flag=false;
+	}
+	else{
+	var query2 = new Query();
+                            var queryTask2 = new QueryTask("http://services.arcgis.com/lHa8gkZXJkNeE9xH/arcgis/rest/services/location/FeatureServer/0");
+                            query2.returnGeometry = true;
+                            query2.outFields = ["OBJECTID"];
+                            query2.where = "Name = '"+ localStorage.getItem("spotonemail").toString()+"'";
+                            queryTask2.executeForIds(query2, function (results) {
+							var point = new Point( 72.25, 32.25, new SpatialReference({ wkid: 4326 }));	
+							//alert(results[0]);
+							if(results.length > 0){
+							var graphic= new Graphic(point, null,  { OBJECTID: results[0], Name: localStorage.getItem("spotonemail").toString(), desc_: "false" , share: "None", value: featureSet.features[i].attributes.Name, Id:76}, null);
+							featureLayera.applyEdits(null, [graphic], null, function () {
+							//alert('Data Updated');
+							});
+							}
+							});	
+	flag=true;}
+	});
+	}
+	});	//end of require
+	}
+	function showError(error) {
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            //alert("User denied the request for Geolocation.");
+            break;
+        case error.POSITION_UNAVAILABLE:
+            //alert("Location information is unavailable.");
+            break;
+        case error.TIMEOUT:
+           //alert("The request to get user location timed out.");
+            break;
+        case error.UNKNOWN_ERROR:
+          //alert("An unknown error occurred.");
+            break;
+    }
+}
+
+	</script>
+    </body>
+</html>
